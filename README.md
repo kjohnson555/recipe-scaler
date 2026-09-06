@@ -92,5 +92,5 @@ Omit `-file` to read the recipe from stdin instead.
 
 ## Status
 
-Early skeleton: quantity parsing, scaling, and formatting work; the file
-format and unit conversion (e.g. tsp -> tbsp -> cup) are not built yet.
+Early skeleton: quantity parsing, scaling, and formatting work and are
+covered by tests; unit conversion (e.g. tsp -> tbsp -> cup) is not built yet.
