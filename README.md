@@ -50,6 +50,14 @@ and returns a new `Recipe`, leaving the input untouched. `ParseQuantity` and
 `FormatQuantity` are pure as well, so all three are trivial to unit test with
 plain input/output pairs.
 
+`ConvertQuantity` and `ConvertIngredient` convert between compatible units:
+tsp, tbsp, and cup for volume; g and kg for mass. Converting between volume
+and mass isn't supported, since that depends on the ingredient's density.
+
+```go
+tbsp, err := recipescale.ConvertQuantity(1, "cup", "tbsp") // 16
+```
+
 ## CLI
 
 The `recipescale` command reads a recipe in a small pipe-delimited text
@@ -92,5 +100,6 @@ Omit `-file` to read the recipe from stdin instead.
 
 ## Status
 
-Early skeleton: quantity parsing, scaling, and formatting work and are
-covered by tests; unit conversion (e.g. tsp -> tbsp -> cup) is not built yet.
+Early skeleton: quantity parsing, scaling, formatting, and unit conversion
+(tsp/tbsp/cup, g/kg) work and are covered by tests. The CLI doesn't use
+conversion yet, and ingredient ranges ("1-2 cloves garlic") aren't parsed.
