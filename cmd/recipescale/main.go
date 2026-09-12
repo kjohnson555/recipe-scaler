@@ -17,6 +17,7 @@ import (
 func main() {
 	servings := flag.Int("servings", 0, "target number of servings")
 	path := flag.String("file", "", "path to recipe file (reads stdin if omitted)")
+	convert := flag.String("convert", "", `convert ingredients to different units after scaling, as "name=unit,name=unit" (e.g. "flour=g,milk=tbsp")`)
 	flag.Parse()
 
 	if *servings <= 0 {
@@ -47,7 +48,69 @@ func main() {
 		os.Exit(1)
 	}
 
+	targetUnits, err := parseConvertFlag(*convert)
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "recipescale: %v\n", err)
+		os.Exit(1)
+	}
+	if len(targetUnits) > 0 {
+		if err := convertIngredients(&scaled, targetUnits); err != nil {
+			fmt.Fprintf(os.Stderr, "recipescale: %v\n", err)
+			os.Exit(1)
+		}
+	}
+
 	printRecipe(os.Stdout, scaled)
+}
+
+// parseConvertFlag parses the -convert flag's "name=unit,name=unit" syntax
+// into a lookup keyed by lowercased ingredient name.
+func parseConvertFlag(s string) (map[string]string, error) {
+	if s == "" {
+		return nil, nil
+	}
+	targets := make(map[string]string)
+	for _, pair := range strings.Split(s, ",") {
+		pair = strings.TrimSpace(pair)
+		if pair == "" {
+			continue
+		}
+		name, unit, ok := strings.Cut(pair, "=")
+		if !ok {
+			return nil, fmt.Errorf("invalid -convert entry %q, want \"name=unit\"", pair)
+		}
+		name = strings.TrimSpace(name)
+		unit = strings.TrimSpace(unit)
+		if name == "" || unit == "" {
+			return nil, fmt.Errorf("invalid -convert entry %q, want \"name=unit\"", pair)
+		}
+		targets[strings.ToLower(name)] = unit
+	}
+	return targets, nil
+}
+
+// convertIngredients converts, in place, every ingredient in r whose name
+// (case-insensitive) appears in targetUnits.
+func convertIngredients(r *recipescale.Recipe, targetUnits map[string]string) error {
+	matched := make(map[string]bool, len(targetUnits))
+	for i, ing := range r.Ingredients {
+		unit, ok := targetUnits[strings.ToLower(ing.Name)]
+		if !ok {
+			continue
+		}
+		matched[strings.ToLower(ing.Name)] = true
+		converted, err := recipescale.ConvertIngredient(ing, unit)
+		if err != nil {
+			return err
+		}
+		r.Ingredients[i] = converted
+	}
+	for name := range targetUnits {
+		if !matched[name] {
+			return fmt.Errorf("-convert: no ingredient named %q in recipe", name)
+		}
+	}
+	return nil
 }
 
 // parseRecipe reads the plain-text recipe format documented in the README:

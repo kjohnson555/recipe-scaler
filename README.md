@@ -98,8 +98,27 @@ Pancakes (serves 6)
 
 Omit `-file` to read the recipe from stdin instead.
 
+Use `-convert` to convert specific ingredients to a different unit after
+scaling, matched by name (case-insensitive):
+
+```sh
+go run ./cmd/recipescale -servings 6 -file pancakes.recipe -convert "milk=tbsp,salt=tbsp"
+```
+
+```
+Pancakes (serves 6)
+  3 cup flour
+  36 tbsp milk
+  1/8 tbsp salt
+  3 eggs
+```
+
+Each name in `-convert` must match an ingredient in the recipe and be
+converted to a unit of the same kind (volume or mass) it's already in.
+
 ## Status
 
 Early skeleton: quantity parsing, scaling, formatting, and unit conversion
-(tsp/tbsp/cup, g/kg) work and are covered by tests. The CLI doesn't use
-conversion yet, and ingredient ranges ("1-2 cloves garlic") aren't parsed.
+(tsp/tbsp/cup, g/kg) work and are covered by tests. The CLI now applies
+`-convert` after scaling. Ingredient ranges ("1-2 cloves garlic") still
+aren't parsed.
