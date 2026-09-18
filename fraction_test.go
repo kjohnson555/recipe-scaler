@@ -47,6 +47,47 @@ func TestParseQuantityErrors(t *testing.T) {
 	}
 }
 
+func TestParseQuantityRange(t *testing.T) {
+	cases := []struct {
+		in       string
+		wantLow  float64
+		wantHigh float64
+	}{
+		{"2", 2, 2},
+		{"1/2", 0.5, 0.5},
+		{"1-2", 1, 2},
+		{"1/2-3/4", 0.5, 0.75},
+		{"1 1/2-2 1/4", 1.5, 2.25},
+		{"  1-2  ", 1, 2},
+		{"-1 1/2", -1.5, -1.5},
+	}
+	for _, c := range cases {
+		low, high, err := ParseQuantityRange(c.in)
+		if err != nil {
+			t.Errorf("ParseQuantityRange(%q) returned error: %v", c.in, err)
+			continue
+		}
+		if low != c.wantLow || high != c.wantHigh {
+			t.Errorf("ParseQuantityRange(%q) = (%v, %v), want (%v, %v)", c.in, low, high, c.wantLow, c.wantHigh)
+		}
+	}
+}
+
+func TestParseQuantityRangeErrors(t *testing.T) {
+	cases := []string{
+		"",
+		"2-1",
+		"abc-2",
+		"1-abc",
+		"1/0-2",
+	}
+	for _, in := range cases {
+		if _, _, err := ParseQuantityRange(in); err == nil {
+			t.Errorf("ParseQuantityRange(%q) expected an error, got nil", in)
+		}
+	}
+}
+
 func TestFormatQuantity(t *testing.T) {
 	cases := []struct {
 		in   float64

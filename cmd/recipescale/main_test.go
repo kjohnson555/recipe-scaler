@@ -1,7 +1,9 @@
 package main
 
 import (
+	"bytes"
 	"reflect"
+	"strings"
 	"testing"
 
 	recipescale "github.com/kjohnson555/recipe-scaler"
@@ -80,6 +82,33 @@ func TestConvertIngredientsUnknownName(t *testing.T) {
 	}
 	if err := convertIngredients(&r, map[string]string{"sugar": "g"}); err == nil {
 		t.Error("convertIngredients with an unknown ingredient name expected an error, got nil")
+	}
+}
+
+func TestParseRecipeIngredientRange(t *testing.T) {
+	in := strings.NewReader("Soup\nservings: 4\n1-2 | | garlic cloves\n")
+	r, err := parseRecipe(in)
+	if err != nil {
+		t.Fatalf("parseRecipe returned error: %v", err)
+	}
+	ing := r.Ingredients[0]
+	if ing.Quantity != 1 || ing.MaxQuantity != 2 {
+		t.Errorf("garlic cloves = %+v, want Quantity 1, MaxQuantity 2", ing)
+	}
+}
+
+func TestPrintRecipeIngredientRange(t *testing.T) {
+	r := recipescale.Recipe{
+		Name:     "Soup",
+		Servings: 4,
+		Ingredients: []recipescale.Ingredient{
+			{Name: "garlic cloves", Quantity: 1, MaxQuantity: 2},
+		},
+	}
+	var buf bytes.Buffer
+	printRecipe(&buf, r)
+	if want := "  1-2 garlic cloves\n"; !strings.Contains(buf.String(), want) {
+		t.Errorf("printRecipe output = %q, want it to contain %q", buf.String(), want)
 	}
 }
 

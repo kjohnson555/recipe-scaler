@@ -86,6 +86,27 @@ func TestScaleInvalidRecipeServings(t *testing.T) {
 	}
 }
 
+func TestScaleIngredientRange(t *testing.T) {
+	r := Recipe{
+		Name:     "Soup",
+		Servings: 4,
+		Ingredients: []Ingredient{
+			{Name: "garlic cloves", Quantity: 1, MaxQuantity: 2},
+		},
+	}
+	scaled, err := Scale(r, 8)
+	if err != nil {
+		t.Fatalf("Scale returned error: %v", err)
+	}
+	ing := scaled.Ingredients[0]
+	if ing.Quantity != 2 || ing.MaxQuantity != 4 {
+		t.Errorf("garlic cloves = %+v, want Quantity 2, MaxQuantity 4", ing)
+	}
+	if !ing.IsRange() {
+		t.Error("scaled ingredient should still be a range")
+	}
+}
+
 func TestScaleEmptyIngredients(t *testing.T) {
 	r := Recipe{Name: "Water", Servings: 1}
 	scaled, err := Scale(r, 2)

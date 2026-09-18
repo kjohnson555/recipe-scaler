@@ -42,6 +42,33 @@ func ParseQuantity(s string) (float64, error) {
 	}
 }
 
+// ParseQuantityRange parses either a single quantity ("1 1/2") or a range
+// ("1-2", "1/2-3/4"). For a single quantity, low and high are equal. The
+// low end must not exceed the high end.
+func ParseQuantityRange(s string) (low, high float64, err error) {
+	s = strings.TrimSpace(s)
+
+	// A leading '-' is a negative sign, not a range separator, so only
+	// split on a '-' that appears after the start of the string.
+	if i := strings.IndexByte(s, '-'); i > 0 {
+		low, err = ParseQuantity(s[:i])
+		if err != nil {
+			return 0, 0, fmt.Errorf("invalid quantity range %q: %w", s, err)
+		}
+		high, err = ParseQuantity(s[i+1:])
+		if err != nil {
+			return 0, 0, fmt.Errorf("invalid quantity range %q: %w", s, err)
+		}
+		if high < low {
+			return 0, 0, fmt.Errorf("invalid quantity range %q: high end is less than low end", s)
+		}
+		return low, high, nil
+	}
+
+	low, err = ParseQuantity(s)
+	return low, low, err
+}
+
 func parseFractionPart(s string) (float64, error) {
 	if i := strings.IndexByte(s, '/'); i >= 0 {
 		num, err := strconv.Atoi(s[:i])

@@ -116,9 +116,28 @@ Pancakes (serves 6)
 Each name in `-convert` must match an ingredient in the recipe and be
 converted to a unit of the same kind (volume or mass) it's already in.
 
+A quantity can also be a range, such as "1-2 cloves garlic". Both ends of
+the range scale together:
+
+```
+Garlic soup
+servings: 4
+1-2 | | garlic cloves
+```
+
+```sh
+go run ./cmd/recipescale -servings 8 -file soup.recipe
+```
+
+```
+Garlic soup (serves 8)
+  2-4 garlic cloves
+```
+
 ## Status
 
-Early skeleton: quantity parsing, scaling, formatting, and unit conversion
-(tsp/tbsp/cup, g/kg) work and are covered by tests. The CLI now applies
-`-convert` after scaling. Ingredient ranges ("1-2 cloves garlic") still
-aren't parsed.
+Early skeleton: quantity parsing (including ranges), scaling, formatting,
+and unit conversion (tsp/tbsp/cup, g/kg) work and are covered by tests. The
+CLI applies `-convert` after scaling. There's no `-output` flag yet to
+write a scaled recipe back out in the same file format, and scaling is
+still by serving count only, not by a target yield like loaf pans.

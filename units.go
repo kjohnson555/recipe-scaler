@@ -71,8 +71,8 @@ func ConvertQuantity(qty float64, from, to string) (float64, error) {
 	return qty * fromDef.toBase / toDef.toBase, nil
 }
 
-// ConvertIngredient returns a copy of ing with its quantity converted to
-// targetUnit. ing is not modified.
+// ConvertIngredient returns a copy of ing with its quantity (and, for a
+// range, its MaxQuantity) converted to targetUnit. ing is not modified.
 func ConvertIngredient(ing Ingredient, targetUnit string) (Ingredient, error) {
 	if ing.Unit == "" {
 		return Ingredient{}, fmt.Errorf("ingredient %q has no unit to convert", ing.Name)
@@ -81,5 +81,13 @@ func ConvertIngredient(ing Ingredient, targetUnit string) (Ingredient, error) {
 	if err != nil {
 		return Ingredient{}, fmt.Errorf("ingredient %q: %w", ing.Name, err)
 	}
-	return Ingredient{Name: ing.Name, Quantity: qty, Unit: targetUnit}, nil
+	converted := Ingredient{Name: ing.Name, Quantity: qty, Unit: targetUnit}
+	if ing.IsRange() {
+		maxQty, err := ConvertQuantity(ing.MaxQuantity, ing.Unit, targetUnit)
+		if err != nil {
+			return Ingredient{}, fmt.Errorf("ingredient %q: %w", ing.Name, err)
+		}
+		converted.MaxQuantity = maxQty
+	}
+	return converted, nil
 }

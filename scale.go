@@ -21,9 +21,10 @@ func Scale(r Recipe, targetServings int) (Recipe, error) {
 	}
 	for i, ing := range r.Ingredients {
 		scaled.Ingredients[i] = Ingredient{
-			Name:     ing.Name,
-			Quantity: ing.Quantity * factor,
-			Unit:     ing.Unit,
+			Name:        ing.Name,
+			Quantity:    ing.Quantity * factor,
+			MaxQuantity: ing.MaxQuantity * factor,
+			Unit:        ing.Unit,
 		}
 	}
 	return scaled, nil

@@ -119,6 +119,8 @@ func convertIngredients(r *recipescale.Recipe, targetUnits map[string]string) er
 //	servings: <n>
 //	<quantity> | <unit> | <ingredient name>
 //	...
+//
+// <quantity> may be a range such as "1-2" instead of a single value.
 func parseRecipe(r io.Reader) (recipescale.Recipe, error) {
 	scanner := bufio.NewScanner(r)
 	var lines []string
@@ -155,15 +157,19 @@ func parseRecipe(r io.Reader) (recipescale.Recipe, error) {
 		if len(parts) != 3 {
 			return recipescale.Recipe{}, fmt.Errorf("invalid ingredient line %q, want \"quantity | unit | name\"", line)
 		}
-		qty, err := recipescale.ParseQuantity(strings.TrimSpace(parts[0]))
+		low, high, err := recipescale.ParseQuantityRange(parts[0])
 		if err != nil {
 			return recipescale.Recipe{}, fmt.Errorf("ingredient %q: %w", line, err)
 		}
-		ingredients = append(ingredients, recipescale.Ingredient{
-			Quantity: qty,
+		ing := recipescale.Ingredient{
+			Quantity: low,
 			Unit:     strings.TrimSpace(parts[1]),
 			Name:     strings.TrimSpace(parts[2]),
-		})
+		}
+		if high != low {
+			ing.MaxQuantity = high
+		}
+		ingredients = append(ingredients, ing)
 	}
 
 	return recipescale.Recipe{Name: name, Servings: servings, Ingredients: ingredients}, nil
@@ -173,6 +179,9 @@ func printRecipe(w io.Writer, r recipescale.Recipe) {
 	fmt.Fprintf(w, "%s (serves %d)\n", r.Name, r.Servings)
 	for _, ing := range r.Ingredients {
 		qty := recipescale.FormatQuantity(ing.Quantity)
+		if ing.IsRange() {
+			qty += "-" + recipescale.FormatQuantity(ing.MaxQuantity)
+		}
 		if ing.Unit == "" {
 			fmt.Fprintf(w, "  %s %s\n", qty, ing.Name)
 		} else {

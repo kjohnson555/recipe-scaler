@@ -68,6 +68,20 @@ func TestConvertIngredient(t *testing.T) {
 	}
 }
 
+func TestConvertIngredientRange(t *testing.T) {
+	ing := Ingredient{Name: "milk", Quantity: 1, MaxQuantity: 2, Unit: "cup"}
+	got, err := ConvertIngredient(ing, "tbsp")
+	if err != nil {
+		t.Fatalf("ConvertIngredient returned error: %v", err)
+	}
+	if got.Quantity != 16 || got.MaxQuantity != 32 {
+		t.Errorf("Quantity, MaxQuantity = %v, %v, want 16, 32", got.Quantity, got.MaxQuantity)
+	}
+	if got.Unit != "tbsp" {
+		t.Errorf("Unit = %q, want %q", got.Unit, "tbsp")
+	}
+}
+
 func TestConvertIngredientNoUnit(t *testing.T) {
 	ing := Ingredient{Name: "eggs", Quantity: 2}
 	if _, err := ConvertIngredient(ing, "g"); err == nil {
