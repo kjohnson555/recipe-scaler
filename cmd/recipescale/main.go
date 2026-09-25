@@ -18,6 +18,7 @@ func main() {
 	servings := flag.Int("servings", 0, "target number of servings")
 	path := flag.String("file", "", "path to recipe file (reads stdin if omitted)")
 	convert := flag.String("convert", "", `convert ingredients to different units after scaling, as "name=unit,name=unit" (e.g. "flour=g,milk=tbsp")`)
+	output := flag.String("output", "", "write the scaled recipe to this path in the recipe file format, so it can be reused as input later")
 	flag.Parse()
 
 	if *servings <= 0 {
@@ -55,6 +56,13 @@ func main() {
 	}
 	if len(targetUnits) > 0 {
 		if err := convertIngredients(&scaled, targetUnits); err != nil {
+			fmt.Fprintf(os.Stderr, "recipescale: %v\n", err)
+			os.Exit(1)
+		}
+	}
+
+	if *output != "" {
+		if err := os.WriteFile(*output, []byte(formatRecipeFile(scaled)), 0o644); err != nil {
 			fmt.Fprintf(os.Stderr, "recipescale: %v\n", err)
 			os.Exit(1)
 		}
@@ -173,6 +181,22 @@ func parseRecipe(r io.Reader) (recipescale.Recipe, error) {
 	}
 
 	return recipescale.Recipe{Name: name, Servings: servings, Ingredients: ingredients}, nil
+}
+
+// formatRecipeFile renders r in the pipe-delimited recipe file format
+// parseRecipe reads, so a scaled recipe written via -output can be fed
+// straight back in as input.
+func formatRecipeFile(r recipescale.Recipe) string {
+	var b strings.Builder
+	fmt.Fprintf(&b, "%s\nservings: %d\n", r.Name, r.Servings)
+	for _, ing := range r.Ingredients {
+		qty := recipescale.FormatQuantity(ing.Quantity)
+		if ing.IsRange() {
+			qty += "-" + recipescale.FormatQuantity(ing.MaxQuantity)
+		}
+		fmt.Fprintf(&b, "%s | %s | %s\n", qty, ing.Unit, ing.Name)
+	}
+	return b.String()
 }
 
 func printRecipe(w io.Writer, r recipescale.Recipe) {

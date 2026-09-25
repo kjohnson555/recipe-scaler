@@ -116,6 +116,13 @@ Pancakes (serves 6)
 Each name in `-convert` must match an ingredient in the recipe and be
 converted to a unit of the same kind (volume or mass) it's already in.
 
+Use `-output` to write the scaled recipe back out to a file in the same
+pipe-delimited format, so it can be reused as input later:
+
+```sh
+go run ./cmd/recipescale -servings 6 -file pancakes.recipe -output pancakes-x6.recipe
+```
+
 A quantity can also be a range, such as "1-2 cloves garlic". Both ends of
 the range scale together:
 
@@ -138,6 +145,6 @@ Garlic soup (serves 8)
 
 Early skeleton: quantity parsing (including ranges), scaling, formatting,
 and unit conversion (tsp/tbsp/cup, g/kg) work and are covered by tests. The
-CLI applies `-convert` after scaling. There's no `-output` flag yet to
-write a scaled recipe back out in the same file format, and scaling is
-still by serving count only, not by a target yield like loaf pans.
+CLI applies `-convert` after scaling and can write the result back out with
+`-output`. Scaling is still by serving count only, not by a target yield
+like loaf pans.

@@ -112,6 +112,40 @@ func TestPrintRecipeIngredientRange(t *testing.T) {
 	}
 }
 
+func TestFormatRecipeFile(t *testing.T) {
+	r := recipescale.Recipe{
+		Name:     "Pancakes",
+		Servings: 6,
+		Ingredients: []recipescale.Ingredient{
+			{Name: "flour", Quantity: 3, Unit: "cup"},
+			{Name: "eggs", Quantity: 3},
+			{Name: "garlic cloves", Quantity: 2, MaxQuantity: 4},
+		},
+	}
+	want := "Pancakes\nservings: 6\n3 | cup | flour\n3 |  | eggs\n2-4 |  | garlic cloves\n"
+	if got := formatRecipeFile(r); got != want {
+		t.Errorf("formatRecipeFile() = %q, want %q", got, want)
+	}
+}
+
+func TestFormatRecipeFileRoundTrip(t *testing.T) {
+	r := recipescale.Recipe{
+		Name:     "Soup",
+		Servings: 8,
+		Ingredients: []recipescale.Ingredient{
+			{Name: "flour", Quantity: 1.5, Unit: "cup"},
+			{Name: "garlic cloves", Quantity: 2, MaxQuantity: 4},
+		},
+	}
+	got, err := parseRecipe(strings.NewReader(formatRecipeFile(r)))
+	if err != nil {
+		t.Fatalf("parseRecipe(formatRecipeFile(r)) returned error: %v", err)
+	}
+	if !reflect.DeepEqual(got, r) {
+		t.Errorf("round trip = %+v, want %+v", got, r)
+	}
+}
+
 func TestConvertIngredientsIncompatibleUnit(t *testing.T) {
 	r := recipescale.Recipe{
 		Ingredients: []recipescale.Ingredient{{Name: "flour", Quantity: 1, Unit: "cup"}},
